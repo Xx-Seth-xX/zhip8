@@ -2,5 +2,5 @@
 
 To execute hardcoded test program use:
 ```console
-  zig build run 
+  $ zig build run 
 ```
