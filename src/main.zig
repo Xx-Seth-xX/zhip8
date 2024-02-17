@@ -46,9 +46,9 @@ const Zhip8 = struct {
     pc: u16,
     const keycodes = [16]c_int{
         ray.KEY_X,
-        ray.KEY_KP_1,
-        ray.KEY_KP_2,
-        ray.KEY_KP_3,
+        ray.KEY_ONE,
+        ray.KEY_TWO,
+        ray.KEY_THREE,
         ray.KEY_Q,
         ray.KEY_W,
         ray.KEY_E,
@@ -57,7 +57,7 @@ const Zhip8 = struct {
         ray.KEY_D,
         ray.KEY_Z,
         ray.KEY_C,
-        ray.KEY_KP_4,
+        ray.KEY_FOUR,
         ray.KEY_R,
         ray.KEY_F,
         ray.KEY_V,
@@ -276,24 +276,24 @@ const Zhip8 = struct {
             },
             // LD I, addr
             0xA => {
-                //         std.log.debug("LD I, 0x{X:0>3}", .{addr});
+                // std.log.debug("LD I, 0x{X:0>3}", .{addr});
                 self.ri = addr;
                 self.pc += 2;
             },
             // JP V0, addr
             0xB => {
-                //         std.log.debug("JP V0 + 0x{X:0>3}", .{addr});
+                // std.log.debug("JP V0 + 0x{X:0>3}", .{addr});
                 self.pc = addr + self.rv[0];
             },
             // RND V0, byte
             0xC => {
-                //         std.log.debug("RND V0, 0x{X}", .{kk});
+                // std.log.debug("RND V0, 0x{X}", .{kk});
                 self.rv[x] = self.rnd.random().int(u8) & kk;
                 self.pc += 2;
             },
             // DRW Vx, Vy, nibble
             0xD => {
-                //         std.log.debug("DRW V{X}={X:0>2}, V{X}={X:0>2}, 0x{X}", .{ x, self.rv[x], y, self.rv[y], nibble });
+                // std.log.debug("DRW V{X}={X:0>2}, V{X}={X:0>2}, 0x{X}", .{ x, self.rv[x], y, self.rv[y], nibble });
                 var ov = false;
                 for (0..nibble) |y_offset| {
                     const screen_y: u8 = @intCast(self.rv[y] + y_offset);
@@ -314,16 +314,16 @@ const Zhip8 = struct {
             0xE => {
                 switch (instr & 0x00FF) {
                     0x9E => {
-                        //                 std.log.debug("SKP V{X}={X:0>2}", .{ x, self.rv[x] });
-                        if (ray.IsKeyDown(self.rv[x])) {
+                        // std.log.debug("SKP V{X}={X:0>2}", .{ x, self.rv[x] });
+                        if (ray.IsKeyDown(Self.keycodes[self.rv[x]])) {
                             self.pc += 2;
                         } else {
                             self.pc += 4;
                         }
                     },
                     0xA1 => {
-                        //                 std.log.debug("SKNP V{X}={X:0>2}", .{ x, self.rv[x] });
-                        if (!ray.IsKeyDown(self.rv[x])) {
+                        // std.log.debug("SKNP V{X}={X:0>2}", .{ x, self.rv[x] });
+                        if (!ray.IsKeyDown(Self.keycodes[self.rv[x]])) {
                             self.pc += 2;
                         } else {
                             self.pc += 4;
@@ -339,12 +339,12 @@ const Zhip8 = struct {
                 switch (instr & 0x00FF) {
                     // LD Vx, DT
                     0x07 => {
-                        //                 std.log.debug("LD V{X}={X:0>2}, DT={X:0>4}", .{ x, self.rv[x], self.rdelay });
+                        // std.log.debug("LD V{X}={X:0>2}, DT={X:0>4}", .{ x, self.rv[x], self.rdelay });
                         self.rv[x] = self.rdelay;
                     },
                     // LD Vx, K
                     0x0A => {
-                        //                 std.log.debug("LD V{X}={X:0>2}, K", .{ x, self.rv[x] });
+                        // std.log.debug("LD V{X}={X:0>2}, K", .{ x, self.rv[x] });
                         const key = ray.GetKeyPressed();
                         if (std.mem.indexOf(c_int, &keycodes, &[_]c_int{key})) |i| {
                             self.rv[x] = @intCast(i);
@@ -354,27 +354,27 @@ const Zhip8 = struct {
                     },
                     // LD DT, Vx
                     0x15 => {
-                        //                 std.log.debug("LD DT={X:0>4}, V{X}={X:0>2}", .{ self.rdelay, x, self.rv[x] });
+                        // std.log.debug("LD DT={X:0>4}, V{X}={X:0>2}", .{ self.rdelay, x, self.rv[x] });
                         self.rdelay = self.rv[x];
                     },
                     // LD ST, Vx
                     0x18 => {
-                        //                 std.log.debug("LD ST={X:0>4}, V{X}={X:0>2}", .{ self.rsound, x, self.rv[x] });
+                        // std.log.debug("LD ST={X:0>4}, V{X}={X:0>2}", .{ self.rsound, x, self.rv[x] });
                         self.rsound = self.rv[x];
                     },
                     // ADD ST, Vx
                     0x1E => {
-                        //                 std.log.debug("LD ST={X:0>4}, V{X}={X:0>2}", .{ self.rsound, x, self.rv[x] });
+                        // std.log.debug("LD ST={X:0>4}, V{X}={X:0>2}", .{ self.rsound, x, self.rv[x] });
                         self.ri +%= self.rv[x];
                     },
                     // LD F, Vx
                     0x29 => {
-                        //                 std.log.debug("LD SPRITE I, V{X}={X}", .{ x, self.rv[x] });
+                        // std.log.debug("LD SPRITE I, V{X}={X}", .{ x, self.rv[x] });
                         self.ri = get_addr_hex_sprite(self.rv[x]);
                     },
                     // LD B, Vx
                     0x33 => {
-                        //                 std.log.debug("LD B, V{X}={X:0>2}", .{ x, self.rv[x] });
+                        // std.log.debug("LD B, V{X}={X:0>2}", .{ x, self.rv[x] });
                         // val = 123
                         const val = self.rv[x];
                         const aux = @rem(val, 100);
@@ -391,14 +391,14 @@ const Zhip8 = struct {
                     },
                     // LD [I], Vx
                     0x55 => {
-                        //                 std.log.debug("LD [I], V{X}={X:0>2}", .{ x, self.rv[x] });
+                        // std.log.debug("LD [I], V{X}={X:0>2}", .{ x, self.rv[x] });
                         for (self.rv[0..(x + 1)], 0..) |vrx, i| {
                             self.mem[self.ri + i] = vrx;
                         }
                     },
                     // LD Vx, [I]
                     0x65 => {
-                        //                 std.log.debug("LD V{X}={X:0>2}, [I]", .{ x, self.rv[x] });
+                        // std.log.debug("LD V{X}={X:0>2}, [I]", .{ x, self.rv[x] });
                         for (self.mem[self.ri..(self.ri + x)], 0..) |data, i| {
                             self.rv[i] = data;
                         }
@@ -483,22 +483,22 @@ pub fn main() !u8 {
             std.os.nanosleep(2, 0);
             return 0xff;
         };
+        ray.BeginDrawing();
         timer += ray.GetFrameTime();
         if (timer >= 1.0 / 60.0) {
             timer = 0.0;
             z8.rdelay -|= 1;
             z8.rsound -|= 1;
+            ray.UpdateTexture(screen_text, @ptrCast(z8.vmem));
+            ray.DrawTexturePro(
+                screen_text,
+                ray.Rectangle{ .x = 0, .y = 0, .width = Zhip8.screen_width, .height = Zhip8.screen_height },
+                ray.Rectangle{ .x = 0, .y = 0, .width = w_width, .height = w_height },
+                ray.Vector2{ .x = 0, .y = 0 },
+                0.0,
+                ray.WHITE,
+            );
         }
-        ray.BeginDrawing();
-        ray.UpdateTexture(screen_text, @ptrCast(z8.vmem));
-        ray.DrawTexturePro(
-            screen_text,
-            ray.Rectangle{ .x = 0, .y = 0, .width = Zhip8.screen_width, .height = Zhip8.screen_height },
-            ray.Rectangle{ .x = 0, .y = 0, .width = w_width, .height = w_height },
-            ray.Vector2{ .x = 0, .y = 0 },
-            0.0,
-            ray.WHITE,
-        );
         ray.EndDrawing();
     }
     return 0;
