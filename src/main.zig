@@ -37,6 +37,7 @@ const Zhip8 = struct {
     rnd: std.rand.Xoshiro256,
     stack: [16]u16,
     vmem: []u8,
+    screen_buffer: []u8,
     mem: []u8,
     rv: [16]u8,
     ri: u16,
@@ -75,10 +76,22 @@ const Zhip8 = struct {
         const wry = @mod(y, screen_height);
         self.vmem[wry * screen_width + wrx] = val;
     }
+    fn updateScreenBuffer(self: Self) void {
+        // This function is called at 60Hz
+        const fading_out_speed: u8 = 0xFF / 10;
+        for (self.screen_buffer, 0..) |*pixel, i| {
+            if (self.vmem[i] == 0xFF) {
+                pixel.* = self.vmem[i];
+            } else {
+                pixel.* -|= fading_out_speed;
+            }
+        }
+    }
     fn init(alloc: std.mem.Allocator) !Self {
         const self = Self{
             .mem = try alloc.alloc(u8, memory_size),
             .vmem = try alloc.alloc(u8, screen_width * screen_height),
+            .screen_buffer = try alloc.alloc(u8, screen_width * screen_height),
             .rv = [_]u8{0} ** 16,
             .ri = 0,
             .rdelay = 0,
@@ -489,7 +502,8 @@ pub fn main() !u8 {
             timer = 0.0;
             z8.rdelay -|= 1;
             z8.rsound -|= 1;
-            ray.UpdateTexture(screen_text, @ptrCast(z8.vmem));
+            z8.updateScreenBuffer();
+            ray.UpdateTexture(screen_text, @ptrCast(z8.screen_buffer));
             ray.DrawTexturePro(
                 screen_text,
                 ray.Rectangle{ .x = 0, .y = 0, .width = Zhip8.screen_width, .height = Zhip8.screen_height },
